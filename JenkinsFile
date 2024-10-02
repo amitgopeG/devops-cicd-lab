@@ -24,7 +24,7 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                sh "${tool 'Terraform'}/terraform plan --lock-timeout=5m -no-color ${params.extra_args}"
+                sh "${tool 'Terraform'}/terraform plan --lock-timeout=1m -no-color ${params.extra_args}"
             }
         }
 
