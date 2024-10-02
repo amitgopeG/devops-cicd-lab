@@ -1,0 +1,53 @@
+pipeline {
+    agent any
+
+    environment {
+        TF_VAR_example = 'value' // Example variable
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'GitHub-token', url: 'https://github.com/amitgopeG/devops-cicd-lab.git'
+                sh 'ls'
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                // Clean up existing Terraform files
+                sh "rm -rf .terraform"
+                // Initialize Terraform without backend for now
+                sh "${tool 'Terraform'}/terraform init -no-color"
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                sh "${tool 'Terraform'}/terraform plan --lock-timeout=5m -no-color"
+            }
+        }
+
+        stage('Approval') {
+            options {
+                timeout(time: 5, unit: 'MINUTES')
+            }
+            steps {
+                input(id: 'confirm', message: 'Apply Terraform?', parameters: [[$class: 'BooleanParameterDefinition', defaultValue: false, description: 'Apply terraform', name: 'confirm']])
+                sh "${tool 'Terraform'}/terraform apply -no-color -auto-approve"
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up...'
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
+    }
+}
