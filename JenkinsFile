@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', credentialsId: 'GitHub-token', url: 'https://github.com/amitgopeG/devops-cicd-lab.git'
+                git branch: 'master', credentialsId: 'GitHub-token', url: 'https://github.com/amitgopeG/devops-cicd-lab.git'
                 sh 'ls'
             }
         }
