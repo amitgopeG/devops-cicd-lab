@@ -1,8 +1,8 @@
 pipeline {
     agent any
 
-    environment {
-        TF_VAR_example = 'value' // Example variable
+    parameters {
+        string(defaultValue: params.extra_args ?: ' ', description: 'Target resource', name: 'extra_args')
     }
 
     stages {
@@ -17,14 +17,14 @@ pipeline {
             steps {
                 // Clean up existing Terraform files
                 sh "rm -rf .terraform"
-                // Initialize Terraform without backend for now
+                // Initialize Terraform
                 sh "${tool 'Terraform'}/terraform init -no-color"
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                sh "${tool 'Terraform'}/terraform plan --lock-timeout=5m -no-color"
+                sh "${tool 'Terraform'}/terraform plan --lock-timeout=5m -no-color ${params.extra_args}"
             }
         }
 
@@ -34,7 +34,13 @@ pipeline {
             }
             steps {
                 input(id: 'confirm', message: 'Apply Terraform?', parameters: [[$class: 'BooleanParameterDefinition', defaultValue: false, description: 'Apply terraform', name: 'confirm']])
-                sh "${tool 'Terraform'}/terraform apply -no-color -auto-approve"
+                script {
+                    if (params.extra_args?.startsWith('-target')) {
+                        sh "${tool 'Terraform'}/terraform apply -no-color -auto-approve -parallelism=10 ${params.extra_args}"
+                    } else {
+                        sh "${tool 'Terraform'}/terraform apply -no-color -auto-approve -parallelism=10"
+                    }
+                }
             }
         }
     }
